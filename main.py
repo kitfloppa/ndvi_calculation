@@ -12,16 +12,30 @@ def get_pixn_ndvi(file, target):
     distance = np.abs(lati - target[0]) ** 2 + np.abs(long - target[1]) ** 2
     i, j = np.unravel_index(distance.argmin(), distance.shape)
 
-    ndvi = np.flipud(np.fliplr(file.groups['geophysical_data'].variables['ndvi'][:]))
-    ndvi[distance < 0.0002] = 2
-
-    plt.imshow(ndvi)
-    plt.show()
-
     return i, j
 
 
-#file = nc.Dataset('../Data/MODIS_la_crau_ndvi/MOD00.P2020140.1150_1.PDS.nc', "r", format="NETCDF4")
+def ndvi_pix_data(file, x, y):
+    ndvi_band = np.flipud(np.fliplr(file.groups['geophysical_data'].variables['ndvi'][:]))
+    ndvi_area = np.zeros((3, 3))
+    x -= 1
+    y -= 1
+
+    for i in range(ndvi_area.shape[0]):
+        for j in range(ndvi_area.shape[1]):
+            ndvi_area[i, j] = ndvi_band[x + i, y + j]
+
+    return np.ravel(ndvi_area)
+
+
+file = nc.Dataset('../Data/MOD00.P2020140.1150_1.PDS.nc', "r", format="NETCDF4")
 target = pn(43.55885, 4.864472)
 
-#i, j = get_pixn_ndvi(file, target)
+i, j = get_pixn_ndvi(file, target)
+lacrau_ndvi = ndvi_pix_data(file, i, j)
+
+mean = std.fmean(lacrau_ndvi)
+deviation = std.pstdev(lacrau_ndvi)
+
+print(mean)
+print(deviation)
