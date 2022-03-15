@@ -1,3 +1,5 @@
+import numpy as np
+
 from math import sqrt
 
 class Point():
@@ -7,7 +9,6 @@ class Point():
     def __getitem__(self, i):
         if i == 0: return self.x
         elif i == 1: return self.y
-        else: assert 'The arguments are only 0 or 1'
 
     def __eq__(self, other):
         if isinstance(other, Point):
@@ -23,10 +24,24 @@ class Point():
 
     def __lt__(self, other):
         if isinstance(other, Point):
-            if self.x<other.x:
+            if self.x < other.x:
                 return True
-            elif self.x==other.x and self.y<other.y:
+            elif self.x == other.x and self.y < other.y:
                 return True
-            
-            return False
-        return NotImplemented
+            else: return False
+        else: return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, Point):
+            if self.x > other.x:
+                return True
+            elif self.x == other.x and self.y > other.y:
+                return True
+            else: return False
+        else: return NotImplemented
+
+    def __str__(self):
+        return "({0}, {1})".format(self.x, self.y)
+
+    def distance(self, other):
+        return sqrt((self.x - other.x) ** 2 + (self.y - other.y) ** 2)
