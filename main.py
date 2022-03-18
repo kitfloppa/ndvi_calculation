@@ -25,13 +25,17 @@ def ndvi_pix_data(file, x, y):
         for j in range(ndvi_area.shape[1]):
             ndvi_area[i, j] = ndvi_band[x + i, y + j]
 
+    plt.imshow(ndvi_area)
+    plt.show()
+
     return np.ravel(ndvi_area)
 
 
-file = nc.Dataset('../Data/MOD00.P2020140.1150_1.PDS.nc', "r", format="NETCDF4")
+file = nc.Dataset('../Data/MODIS_la_crau_ndvi/MOD00.P2020140.1150_1.PDS.L2', "r", format="NETCDF4")
 target = pn(43.55885, 4.864472)
 
 i, j = get_pixn_ndvi(file, target)
+print(i, j)
 lacrau_ndvi = ndvi_pix_data(file, i, j)
 
 mean = std.fmean(lacrau_ndvi)
@@ -39,3 +43,7 @@ deviation = std.pstdev(lacrau_ndvi)
 
 print(mean)
 print(deviation)
+
+print((0.2565 - 0.0931) / (0.2565 + 0.0931))
+print((0.2442 - 0.0980) / (0.2442 + 0.0980))
+
