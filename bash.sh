@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OCSSWROOT=/home/floppa/ocssw
+export OCSSWROOT=/home/kitfloppa/ocssw
 source $OCSSWROOT/OCSSW_bash.env
 
 function process_l2() {
