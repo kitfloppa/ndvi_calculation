@@ -1,5 +1,7 @@
-import netCDF4 as nc
+
+import sys
 import numpy as np
+import netCDF4 as nc
 import statistics as std
 import matplotlib.pyplot as plt
 
@@ -30,20 +32,22 @@ def ndvi_pix_data(file, x, y):
 
     return np.ravel(ndvi_area)
 
+if __name__ == "__main__":
+    
+    print(sys.argv[0])
+    
+    #file = nc.Dataset('../NDVI_Data/MODIS_NDVI_[01.01.2020]/Data/MOD00.P2020001.1210_1.PDS.L2.nc', "r", format="NETCDF4")
+    #target = pn(43.55885, 4.864472)
 
-file = nc.Dataset('../Data/MODIS_la_crau_ndvi/MOD00.P2020140.1150_1.PDS.L2', "r", format="NETCDF4")
-target = pn(43.55885, 4.864472)
+    #i, j = get_pixn_ndvi(file, target)
+    #print(i, j)
+    #lacrau_ndvi = ndvi_pix_data(file, i, j)
 
-i, j = get_pixn_ndvi(file, target)
-print(i, j)
-lacrau_ndvi = ndvi_pix_data(file, i, j)
+    #mean = std.fmean(lacrau_ndvi)
+    #deviation = std.pstdev(lacrau_ndvi)
 
-mean = std.fmean(lacrau_ndvi)
-deviation = std.pstdev(lacrau_ndvi)
+    #print(mean)
+    #print(deviation)
 
-print(mean)
-print(deviation)
-
-print((0.2565 - 0.0931) / (0.2565 + 0.0931))
-print((0.2442 - 0.0980) / (0.2442 + 0.0980))
-
+    #print((0.2565 - 0.0931) / (0.2565 + 0.0931))
+    #print((0.2442 - 0.0980) / (0.2442 + 0.0980))
