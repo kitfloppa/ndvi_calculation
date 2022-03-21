@@ -3,11 +3,11 @@
 export OCSSWROOT=/home/floppa/ocssw
 source $OCSSWROOT/OCSSW_bash.env
 
-function date_from_julian() {
+function date_from_nday() {
     local i=0
     local hh=${1:15:2}
     local mm=${1:17:2}
-    datetime="$hh:$mm"
+    datetime="$hh-$mm"
     date=${1:7:7}
     let day=$((date % 1000))
     local year=${date::-3}
@@ -15,7 +15,7 @@ function date_from_julian() {
     local months=( 31 28 31 30 31 30 31 31 30 31 30 31)
     local month=${months[i]}
 
-    if [ $((year % 4)) -eq 0 ] && [ ! $((year % 100)) -eq 0 ]; then
+    if [ $((year % 4)) -eq 0 ] && [ ! $((year % 100)) -eq 0 ] || [ $((year % 500)) -eq 0 ]; then
         let months[1]++
     fi
 
@@ -42,20 +42,20 @@ function date_from_julian() {
         fi
     fi
 }
-export -f date_from_julian
+export -f date_from_nday
 
 function process_l2() {
     file=$(echo $1|tr -d '\r')
     file=${file::-4}
-    date_from_julian $file
+    date_from_nday $file
 
-    if [ ! -d "../NDVI_Data/MODIS_NDVI_[$date][$datetime]" ]; then
-        mkdir ../NDVI_Data/"MODIS_NDVI_[$date][$datetime]"
-        cd ../NDVI_Data/"MODIS_NDVI_[$date][$datetime]"/
+    if [ ! -d "../NDVI_Data/NDVI_[$date][$datetime]" ]; then
+        mkdir ../NDVI_Data/"NDVI_[$date][$datetime]"
+        cd ../NDVI_Data/"NDVI_[$date][$datetime]"/
         mkdir Data
         cd Data/
     else
-        cd ../NDVI_Data/"MODIS_NDVI_[$date][$datetime]"/
+        cd ../NDVI_Data/"NDVI_[$date][$datetime]"/
         
         if [ ! -d "Data" ]; then
             mkdir Data
@@ -65,7 +65,7 @@ function process_l2() {
         fi
     fi
 
-    if [ ! -f "$file.L2.nc" ]
+    if [ ! -f "$file.L2.nc" ]; then
         curl -O -b ~/.urs_cookies -c ~/.urs_cookies -L -n "https://oceandata.sci.gsfc.nasa.gov/ob/getfile/$file.PDS.bz2"
         bzip2 -d "$file.PDS.bz2"
 
@@ -88,6 +88,10 @@ export -f process_l2
 
 if [ ! -d "../NDVI_Data" ]; then
     mkdir ../NDVI_Data
+fi
+
+if [ ! -d "../NDVI_Data/Report" ]; then
+    mkdir ../NDVI_Data/Report
 fi
 
 parallel -j 8 -a data_list.txt process_l2
