@@ -5,12 +5,12 @@ source $OCSSWROOT/OCSSW_bash.env
 
 function date_from_nday() {
     local i=0
-    local hh=${1:15:2}
-    local mm=${1:17:2}
-    datetime="$hh-$mm"
+    
     date=${1:7:7}
+    
     let day=$((date % 1000))
     local year=${date::-3}
+    
     declare -a months
     local months=( 31 28 31 30 31 30 31 31 30 31 30 31)
     local month=${months[i]}
@@ -49,13 +49,13 @@ function process_l2() {
     file=${file::-4}
     date_from_nday $file
 
-    if [ ! -d "../NDVI_Data/NDVI_[$date][$datetime]" ]; then
-        mkdir ../NDVI_Data/"NDVI_[$date][$datetime]"
-        cd ../NDVI_Data/"NDVI_[$date][$datetime]"/
+    if [ ! -d "../NDVI_Data/NDVI_[$date]" ]; then
+        mkdir ../NDVI_Data/"NDVI_[$date]"
+        cd ../NDVI_Data/"NDVI_[$date]"/
         mkdir Data
         cd Data/
     else
-        cd ../NDVI_Data/"NDVI_[$date][$datetime]"/
+        cd ../NDVI_Data/"NDVI_[$date]"/
         
         if [ ! -d "Data" ]; then
             mkdir Data
@@ -66,6 +66,7 @@ function process_l2() {
     fi
 
     if [ ! -f "$file.L2.nc" ]; then
+        find ../../../LCFR-2021 -type f -name "LCFR01_${file:7:4}_${file:11:3}*" -exec cp {} . \;
         curl -O -b ~/.urs_cookies -c ~/.urs_cookies -L -n "https://oceandata.sci.gsfc.nasa.gov/ob/getfile/$file.PDS.bz2"
         bzip2 -d "$file.PDS.bz2"
 
