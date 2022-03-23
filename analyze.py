@@ -1,5 +1,4 @@
 import sys
-
 import numpy as np
 import netCDF4 as nc
 import statistics as std
@@ -78,7 +77,7 @@ def ndvi_pix_data(file, path, x, y):
     return np.ravel(ndvi_area)
 
 if __name__ == "__main__":
-    # Saint-Martin-de-Crau station coordinates
+    # La Crau station coordinates
     latitude = 43.55885
     longitude = 4.864472
 

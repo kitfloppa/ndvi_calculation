@@ -66,7 +66,6 @@ function process_l2() {
     fi
 
     if [ ! -f "$file.L2.nc" ]; then
-        find ../../../LCFR-2021 -type f -name "LCFR01_${file:7:4}_${file:11:3}*" -exec cp {} . \;
         curl -O -b ~/.urs_cookies -c ~/.urs_cookies -L -n "https://oceandata.sci.gsfc.nasa.gov/ob/getfile/$file.PDS.bz2"
         bzip2 -d "$file.PDS.bz2"
 
@@ -76,6 +75,7 @@ function process_l2() {
         ~/ocssw/bin/l2gen ifile="$file.L1B_1KM" geofile="$file.GEO" ofile="$file.L2.nc" maskland=off resolution=250 l2prod=ndvi,Rrs_nnn,chlor_a,aot_nnn,Lt_nnn,Lr_nnn,La_nnn
 
         find . -type f -name 'MCFWrite*' -exec rm -f {} +
+        find ../../../LCFR-2021 -type f -name "LCFR01_${file:7:4}_${file:11:3}*" -exec cp {} . \;
 
         rm "$file.PDS"
         rm "$file.L1A"
