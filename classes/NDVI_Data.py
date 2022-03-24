@@ -23,7 +23,7 @@ class NDVI_Data():
             raise TypeError("Path should be string type!")
         else: self.path = path
 
-        if not isinstance(path, np.ndarray):
+        if not isinstance(ndvi, np.ndarray):
             raise TypeError("NDVI matrix should be numpy.ndarray type!")
         else: self.ndvi = ndvi
 
