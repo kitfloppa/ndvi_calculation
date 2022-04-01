@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#DB
+*.db
+
 # C extensions
 *.so
 
@@ -12,6 +15,7 @@ __pycache__/
 # Distribution / packaging
 .Python
 build/
+LCFR/
 develop-eggs/
 dist/
 downloads/

@@ -7,7 +7,7 @@ import statistics as std
 import matplotlib.dates as mlt
 import matplotlib.pyplot as plt
 
-from classes.Point import Point as pn
+from processing.Point import Point as pn
 from parse_station_file import read_file
 from classes.NDVI_Data import NDVI_Data as nd
 from datetime import datetime

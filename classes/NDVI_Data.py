@@ -1,6 +1,6 @@
 import numpy as np
 
-from classes.Point import Point as pn
+from processing.Point import Point as pn
 from datetime import date as dt
 
 class NDVI_Data():
