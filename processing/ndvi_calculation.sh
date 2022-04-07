@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OCSSWROOT=/home/kitfloppa/ocssw
+export OCSSWROOT=/home/floppa/ocssw
 source $OCSSWROOT/OCSSW_bash.env
 source ../.env/bin/activate
 
@@ -48,15 +48,14 @@ function date_from_nday() {
 export -f date_from_nday
 
 function list_preparation() {
-    lcfr_path="LCFR"
     lists_path="./lists"
 
-    echo -n > "$lists_path/intermediate_data_list.txt"
+    echo -n > "$lists_path/right_data_list.txt"
 
-    for file in $lcfr_path
-    do
-        file_name=${file:8}
-        grep -h "${file_name:7:4}${file_name:12:3}" "$lists_path/full_data_list.txt" >> "$lists_path/intermediate_data_list.txt"
+    for i in LCFR/* ; do
+        
+        name=$(basename "$i")
+        grep -h "${name:7:4}${name:12:3}" "$lists_path/full_data_list.txt" >> "$lists_path/right_data_list.txt"
     done
 }
 export -f list_preparation
@@ -80,11 +79,11 @@ function process_l2() {
             cd "$datapath/NDVI_${date}_$datetime"
         fi
 
-        curl -O -b ~/.urs_cookies -c ~/.urs_cookies -L -n "$oceandata_path.bz2" > "/dev/null" 2>&1
+        curl -O -b ~/.urs_cookies -c ~/.urs_cookies -L -n --connect-timeout 900 "$oceandata_path.bz2" > "/dev/null" 2>&1
     
-        if ! bzip2 -d "$file.PDS.bz2" ; then
-            mv "$file.PDS.bz2" "$file.PDS.xz"
-            xz -d "$file.PDS.xz"
+        if ! bzip2 -d "$file.PDS.bz2" > "/dev/null" 2>&1 ; then
+            mv "$file.PDS.bz2" "$file.PDS.xz" > "/dev/null" 2>&1
+            xz -d "$file.PDS.xz" > "/dev/null" 2>&1
         fi
 
         if ! ~/ocssw/bin/modis_L1A "$file.PDS" -o "$file.L1A" -m aqua > "/dev/null" 2>&1 ; then
@@ -98,6 +97,7 @@ function process_l2() {
         else
             echo "$file -> GEO Processing done!"
         fi
+        wait $!
 
         if ! ~/ocssw/bin/modis_L1B "$file.L1A" -o "$file.L1B_1KM" -k "$file.L1B_HKM" -q "$file.L1B_QKM" > "/dev/null" 2>&1 ; then
             echo "$file -> L1B Processing error!"
@@ -120,7 +120,7 @@ function process_l2() {
         find "../../LCFR" -name "LCFR01_${year}_${nday}*" | xargs python "../../parse_modis_file.py" "$file.L2.nc"
 
         cd ..
-        rm -rf "$datapath/NDVI_${date}_$datetime"
+        rm -rf "NDVI_${date}_$datetime"
     fi
 }
 export -f process_l2
