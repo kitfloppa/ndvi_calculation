@@ -4,6 +4,19 @@ import datetime as dt
 aerosol_types = {'R': '?', 'C': '?', 'D': 'Desert', 'M': 'Marine'}
 
 
+def find_station_time(modis_time, station_time):
+    modis_time = min_time = dt.timedelta(hours=modis_time.hour, minutes=modis_time.minute).total_seconds()
+    item = 0
+
+    for i, s_time in enumerate(station_time):
+        s_time = dt.timedelta(hours=s_time.hour, minutes=s_time.minute)
+        if min_time > abs(modis_time - s_time.total_seconds()):
+            min_time = abs(modis_time - s_time.total_seconds())
+            item = i
+
+    return item
+
+
 def block_iter(lineiter):
     block = []
     

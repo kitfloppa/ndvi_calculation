@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export OCSSWROOT=/home/floppa/ocssw
+export OCSSWROOT=/home/kitfloppa/ocssw
 source $OCSSWROOT/OCSSW_bash.env
 source ../.env/bin/activate
 
@@ -8,8 +8,8 @@ function date_from_nday() {
     local i=0
     
     date=${1:7:7}
-    local hh=${1:15:2}
-    local mm=${1:17:2}
+    hh=${1:15:2}
+    mm=${1:17:2}
     datetime="${hh}-${mm}"
     let day=$((date % 1000))
     local year=${date::-3}
@@ -51,14 +51,30 @@ function list_preparation() {
     lists_path="./lists"
 
     echo -n > "$lists_path/right_data_list.txt"
+    echo -n > "$lists_path/intermediate_data_list.txt"
 
     for i in LCFR/* ; do
-        
         name=$(basename "$i")
-        grep -h "${name:7:4}${name:12:3}" "$lists_path/full_data_list.txt" >> "$lists_path/right_data_list.txt"
+        grep -h "${name:7:4}${name:12:3}" "$lists_path/full_data_list.txt" >> "$lists_path/intermediate_data_list.txt"
     done
 }
 export -f list_preparation
+
+function right_list() {
+   cat "$lists_path/intermediate_data_list.txt" | while read line ; do
+        f=$(echo $line|tr -d '\n')
+        f=${f::-4}
+        date_from_nday $f
+        db_date="${date:6:4}-${date:3:2}-${date::2}"
+
+        time_exist=$(sqlite3 ../ndvi_database.db "SELECT modis_time FROM ndvi WHERE date='$db_date'")
+
+        if [ "$time_exist" == "${hh}:${mm}:00" ]; then
+            echo "$line.PDS" >> "$lists_path/right_data_list.txt"
+        fi
+    done
+}
+export -f right_list
 
 function process_l2() {
     datapath="NDVI_Data"
@@ -70,8 +86,9 @@ function process_l2() {
     date_from_nday $file
     year=${file:7:4}
     nday=${file:11:3}
+    db_date="${date:6:4}-${date:3:2}-${date::2}"
 
-    exist=$(sqlite3 ../ndvi_database.db "SELECT * FROM ndvi WHERE date='$date'")
+    exist=$(sqlite3 ../ndvi_database.db "SELECT * FROM ndvi WHERE date='$db_date'")
 
     if [ -z "$exist" ]; then
         if [ ! -d "$datapath/NDVI_${date}_$datetime" ]; then
@@ -126,7 +143,7 @@ function process_l2() {
 export -f process_l2
 
 if [ ! -d "NDVI_Data" ]; then
-    mkdir "NDVI_Data"
+    mkdir "NDVI_Data"   
 fi
 
 if [ ! -f "../ndvi_database.db" ]; then
@@ -134,8 +151,7 @@ if [ ! -f "../ndvi_database.db" ]; then
     station_ndvi_data blob, constraint pk_ndvi primary key (date))"
 fi
 
-list_preparation
-parallel -j 8 -a ./lists/right_data_list.txt process_l2
+parallel -j 8 -a "./lists/right_data_list.txt" process_l2
 deactivate
 
 rm -rf "NDVI_Data"

@@ -3,6 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+#PDF
+*.PDF
+*.pdf
+
 #DB
 *.db
 
