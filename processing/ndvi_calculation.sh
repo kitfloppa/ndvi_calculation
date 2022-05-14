@@ -18,7 +18,7 @@ function date_from_nday() {
     local months=( 31 28 31 30 31 30 31 31 30 31 30 31)
     local month=${months[i]}
 
-    if [ $((year % 4)) -eq 0 ] && [ ! $((year % 100)) -eq 0 ] || [ $((year % 500)) -eq 0 ]; then
+    if [ $((year % 4)) -eq 0 ] && [ ! $((year % 100)) -eq 0 ] || [ $((year % 400)) -eq 0 ]; then
         let months[1]++
     fi
 
@@ -70,7 +70,7 @@ function right_list() {
         time_exist=$(sqlite3 ../ndvi_database.db "SELECT modis_time FROM ndvi WHERE date='$db_date'")
 
         if [ "$time_exist" == "${hh}:${mm}:00" ]; then
-            echo "$line.PDS" >> "$lists_path/right_data_list.txt"
+            echo "$line" >> "$lists_path/right_data_list.txt"
         fi
     done
 }
@@ -134,7 +134,7 @@ function process_l2() {
 
         find . -type f -name 'MCFWrite*' -exec rm -f {} +
 
-        find "../../LCFR" -name "LCFR01_${year}_${nday}*" | xargs python "../../parse_modis_file.py" "$file.L2.nc"
+        find "../../LCFR" -name "LCFR01_${year}_${nday}*" | xargs python "../../record.py" "$file.L2.nc"
 
         cd ..
         rm -rf "NDVI_${date}_$datetime"
@@ -147,11 +147,11 @@ if [ ! -d "NDVI_Data" ]; then
 fi
 
 if [ ! -f "../ndvi_database.db" ]; then
-    sqlite3 "../ndvi_database.db" "CREATE TABLE ndvi(date text, modis_time text, modis_ndvi_data blob, modis_ndvi_band blob, station_time text, 
-    station_ndvi_data blob, constraint pk_ndvi primary key (date))"
+    sqlite3 "../ndvi_database.db" "CREATE TABLE ndvi(date text, modis_time text, modis_ndvi_data blob, modis_ndvi_band blob, modis_azimut text, 
+    station_time text, station_ndvi_data blob, station_wv text, station_solar_az text, constraint pk_ndvi primary key (date))"
 fi
 
-parallel -j 8 -a "./lists/right_data_list.txt" process_l2
+parallel -j 8 -a "./lists/filter_date.txt" process_l2
 deactivate
 
 rm -rf "NDVI_Data"

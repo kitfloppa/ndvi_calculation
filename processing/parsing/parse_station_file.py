@@ -74,6 +74,12 @@ def read_weather_subblock(line_iter):
     
     return rows
 
+def read_angle_subblock(data, line_iter):
+    rows = read_data_subblock(line_iter, 'esd')
+    
+    for key in ['Zen', 'Azi', 'esd']:
+        data[key] = [float(val) for val in rows[key]]
+
 
 def read_srf_subblock(line_iter):
     rows = {}
@@ -95,11 +101,15 @@ def read_types_line(line_iter):
     return vals
 
 
-def parse_main_data_block(block):
+def parse_main_data_block(block, file_type):
     lineiter = iter(block)
     times = read_times_subblock(lineiter)
     weather = read_weather_subblock(lineiter)
     weather['Type'] = read_types_line(lineiter)
+
+    if file_type != 'input':
+        read_angle_subblock(weather, lineiter)
+
     srf = read_srf_subblock(lineiter)
     
     return times, weather, srf
@@ -113,13 +123,12 @@ def parse_errors_data_block(block):
     return weather_errs, srf_errs
 
 
-def read_file(file):
+def read_station_file(file, file_type='input'):
     if isinstance(file, str):
         file = open(file, 'rt')
     blockiter = iter(block_iter(file))
 
     metadata = parse_metadata_block(next(blockiter))
-    times, weather, srf = parse_main_data_block(next(blockiter))
-    weather_errs, srf_errs = parse_errors_data_block(next(blockiter))
+    times, weather, srf = parse_main_data_block(next(blockiter), file_type)
     
-    return times, srf
+    return times, weather, srf

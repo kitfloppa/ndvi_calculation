@@ -3,6 +3,7 @@ import numpy as np
 import netCDF4 as nc
 import matplotlib.pyplot as plt
 
+from math import atan2, pi
 
 def date_from_modis_filename(file_name):
     i = 0
@@ -50,6 +51,19 @@ def get_pixn_ndvi(file, target):
         i, j = -1, -1
 
     return i, j
+
+
+def get_azimut(file, target):
+    clat = file.groups['scan_line_attributes'].variables['clat'][:]
+    clon = file.groups['scan_line_attributes'].variables['clon'][:]
+    
+    distance = (np.abs(clat - target[0]) ** 2 + np.abs(clon - target[1]) ** 2)
+    x = np.unravel_index(distance.argmin(), distance.shape)[0]
+
+    azimut = (180.0 / pi) * atan2(clon[x] - target[1], clat[x] - target[0])
+    if azimut < 0: azimut += 360
+
+    return azimut
 
 
 def ndvi_pix_data(file, x, y):
