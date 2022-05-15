@@ -1,4 +1,4 @@
-[![Download Aqua/MODIS data](https://i.ibb.co/tM6Jvd5/Screenshot-2022-04-08-223819.png)](https://oceancolor.gsfc.nasa.gov/cgi/browse.pl) 
+[![Download Aqua/MODIS data](https://i.ibb.co/KzZ1zp0/Screenshot-2022-04-08-223819.png)](https://oceancolor.gsfc.nasa.gov/cgi/browse.pl) 
 [![Download RadCalNet data](https://www.radcalnet.org/modules/core/img/header/RADCALNET-LOGO-COMPLET.png)](https://www.radcalnet.org/#!/)
 
 # Investigation of the accuracy of NDVI calculations
@@ -9,9 +9,7 @@
 python -m venv .env
 source .env/bin/activate
 
-pip install netCDF4
-pip install matplotlib
-pip install statistics
+pip install -r requirements.txt
 ```
 
 ## Installation OCCSW

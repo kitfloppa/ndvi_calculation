@@ -141,7 +141,7 @@ if __name__ == "__main__":
             row = cursor.fetchone()
             if row:
                 ndvi[row[0]] = np.insert(np.frombuffer(row[2]), 0, std.fmean(np.frombuffer(row[1])))
-                ndvi[row[0]] = np.insert(ndvi[row[0]], 5,  np.array([float(row[3]), float(row[4]), float(row[5])]))
+                ndvi[row[0]] = np.insert(ndvi[row[0]], 5,  np.array([row[3], row[4], row[5]]))
                 years.add(date.fromisoformat(row[0]).year)
             else:
                 break
@@ -154,7 +154,7 @@ if __name__ == "__main__":
             if mc_filtered[3][i][1] != 9999.0:
                 water_vapor[np.fabs(mc_filtered[1][i] - mc_filtered[2][i]) / mc_filtered[2][i]] = mc_filtered[3][i][1]
             
-            if mc_filtered[3][i][0] != float('nan'):
+            if mc_filtered[3][i][0] != None:
                 if mc_filtered[3][i][2] < 0: mc_filtered[3][i][2] += 360
                 angles[np.fabs(mc_filtered[1][i] - mc_filtered[2][i]) / mc_filtered[2][i]] = np.fabs(mc_filtered[3][i][0] - mc_filtered[3][i][2])
 

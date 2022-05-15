@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#../../../ndvi_database.db
-
 source ../.env/bin/activate
 
 count=0

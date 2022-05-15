@@ -40,6 +40,8 @@ if __name__ == "__main__":
     modis_azimut = get_satellite_azimut(modis_file, target)
     i, j = get_pixn_ndvi(modis_file, target)
 
+    if solar_azimut < 0: solar_azimut += 360
+
     if not (i == -1 and j == -1):
         modis_ndvi = ndvi_pix_data(modis_file, i, j)
 
@@ -55,7 +57,7 @@ if __name__ == "__main__":
             ndvi_band = pic.read()
         
         try:
-            sl_connection = sl.connect("../ndvi.db", detect_types=sl.PARSE_DECLTYPES)
+            sl_connection = sl.connect("../../../ndvi_database.db", detect_types=sl.PARSE_DECLTYPES)
             cursor = sl_connection.cursor()
 
             cursor.execute("INSERT INTO ndvi VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", (analyzed_date, str(modis_time), 
@@ -63,6 +65,7 @@ if __name__ == "__main__":
                                                                                     modis_azimut, str(station_time), 
                                                                                     station_ndvi, water_vapor,
                                                                                     solar_azimut, solar_zenith))
+
             sl_connection.commit()
 
         except sl.Error as error:
