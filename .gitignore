@@ -3,12 +3,16 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# VS Code
+.vscode/
+
 #PDF
 *.PDF
 *.pdf
 
 #DB
 *.db
+*.xlsb
 
 # C extensions
 *.so

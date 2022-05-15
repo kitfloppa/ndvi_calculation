@@ -53,7 +53,7 @@ def get_pixn_ndvi(file, target):
     return i, j
 
 
-def get_azimut(file, target):
+def get_satellite_azimut(file, target):
     clat = file.groups['scan_line_attributes'].variables['clat'][:]
     clon = file.groups['scan_line_attributes'].variables['clon'][:]
     

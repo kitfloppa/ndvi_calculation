@@ -134,7 +134,7 @@ function process_l2() {
 
         find . -type f -name 'MCFWrite*' -exec rm -f {} +
 
-        find "../../LCFR" -name "LCFR01_${year}_${nday}*" | xargs python "../../record.py" "$file.L2.nc"
+        find "../../LCFR" -name "LCFR01_${year}_${nday}*" | xargs python "../../db_recording.py" "$file.L2.nc"
 
         cd ..
         rm -rf "NDVI_${date}_$datetime"
@@ -147,8 +147,8 @@ if [ ! -d "NDVI_Data" ]; then
 fi
 
 if [ ! -f "../ndvi_database.db" ]; then
-    sqlite3 "../ndvi_database.db" "CREATE TABLE ndvi(date text, modis_time text, modis_ndvi_data blob, modis_ndvi_band blob, modis_azimut text, 
-    station_time text, station_ndvi_data blob, station_wv text, station_solar_az text, constraint pk_ndvi primary key (date))"
+    sqlite3 "../ndvi_database.db" "CREATE TABLE ndvi(date text, modis_time text, modis_ndvi_data blob, modis_ndvi_band blob, modis_azimut real, 
+    station_time text, station_ndvi_data blob, station_wv real, station_solar_az real, station_solar_zen real, constraint pk_ndvi primary key (date))"
 fi
 
 parallel -j 8 -a "./lists/filter_date.txt" process_l2

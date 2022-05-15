@@ -4,6 +4,7 @@ import datetime as dt
 aerosol_types = {'R': '?', 'C': '?', 'D': 'Desert', 'M': 'Marine'}
 
 
+# Function for finding the closest station time with satellite overflight
 def find_station_time(modis_time, station_time):
     modis_time = min_time = dt.timedelta(hours=modis_time.hour, minutes=modis_time.minute).total_seconds()
     item = 0
@@ -73,6 +74,7 @@ def read_weather_subblock(line_iter):
         rows[key] = [float(val) for val in rows[key]]
     
     return rows
+
 
 def read_angle_subblock(data, line_iter):
     rows = read_data_subblock(line_iter, 'esd')
