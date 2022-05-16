@@ -13,6 +13,7 @@ __pycache__/
 #DB
 *.db
 *.xlsb
+*.yaml
 
 # C extensions
 *.so

@@ -1,36 +1,12 @@
+import yaml
 import numpy as np
-import sqlite3 as sl
+import pandas as pd
 import statistics as std
 import matplotlib.pyplot as plt
 
 from datetime import date
-import matplotlib.patches as mpatches
 from matplotlib.backends.backend_pdf import PdfPages
 
-
-def add_fitch_plot(x, y, w, z, pdf, title):
-    fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(14, 6), dpi=150)
-
-    ax[0].scatter(x, y, marker='o')
-    ax[1].scatter(w, z, marker='o')
-    plt.suptitle(f'{title}')
-
-    pdf.savefig()
-    plt.close()
-
-
-def add_ndvi_plot(x, y, z, pdf, title, channel):
-    fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
-
-    ax.plot(x, y, label='MODIS NDVI')
-    ax.plot(x, z, label=f'Station NDVI in {channel} channels')
-    ax.legend()
-    plt.suptitle(f'{title}')
-    plt.xlabel('Date')
-    plt.ylabel('NDVI')
-    
-    pdf.savefig()
-    plt.close()
 
 def r2(x, y):
     slope, intercept = np.polyfit(x, y, 1)
@@ -56,135 +32,128 @@ def add_regression_plot(x, y, pdf, title):
     b = estimate_coeff(x, y)
     r_2 = r2(x.astype('float64'), y.astype('float64'))
     y_pred = b[0] + b[1] * x
-    patch = mpatches.Patch(label=r'$R^2 = {}$'.format(r_2))
     fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
 
-    ax.scatter(x, y, marker='o')
-    ax.plot(x, y_pred, color='g')
-    ax.legend(handles=[patch])
+    ax.scatter(x, y, marker='o', s=2, label=r'$R^2 = {}$'.format(r_2))
+    ax.plot(x, y_pred, color='g', label=f"a = {b[0]}, \nb = {b[1]}")
     plt.suptitle(f'{title}')
     plt.xlabel('MODIS NDVI')
     plt.ylabel('Station NDVI')
+    plt.legend()
 
     pdf.savefig()
     plt.close()
 
 
-def ndvi_filter(dates, modis_ndvi, station_ndvi, fithes):
-    error, filter_dates, filtered_modis_ndvi, filtered_station_ndvi, filtered_fithes = [], [], [], [], []
-    error_date = []
+def add_scatter_plot(x, y, pdf, title, labels):
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
 
-    for i, m_ndvi in enumerate(modis_ndvi):
-        error.append(abs(m_ndvi - station_ndvi[i]) / abs(station_ndvi[i]))
+    ax.scatter(x, y, marker='o', s=2)
+    plt.xlabel(labels[0])
+    plt.ylabel(labels[1])
 
-    mc_mean = std.fmean(error)
-
-    for i, error in enumerate(error):
-        if error < (2 * mc_mean):
-            filter_dates.append(dates[i])
-            filtered_modis_ndvi.append(modis_ndvi[i])
-            filtered_station_ndvi.append(station_ndvi[i])
-            filtered_fithes.append(fithes[i])
-        else:
-            error_date.append((dates[i], modis_ndvi[i], station_ndvi[i]))
-
-    print(error_date)
-    return np.array([filter_dates, filtered_modis_ndvi, filtered_station_ndvi, filtered_fithes])
+    pdf.savefig()
+    plt.close()
 
 
-def filtered_dict(dict):
-    dict = sorted(dict.items())
-    adates_key, ndvi = zip(*dict)
-    dates, modis_ndvi, mc_station_ndvi, sc_station_ndvi, fithes = [], [], [], [], []
+def add_ndvi_plot(x, data, pdf, title, labels):
+    fig, ax = plt.subplots(figsize=(8, 6), dpi=150)
 
-    for i, ndvi_data in enumerate(ndvi):
-        dates.append(date.fromisoformat(adates_key[i]))
-        modis_ndvi.append(ndvi_data[0])
-        mc_station_ndvi.append(ndvi_data[1])
-        sc_station_ndvi.append(ndvi_data[4])
-        fithes.append(np.array([ndvi_data[5], ndvi_data[6], ndvi_data[7]]))
+    for i, j in zip(data, labels):
+        ax.plot(x, i, label=j)
 
-    return ndvi_filter(dates, modis_ndvi, mc_station_ndvi, fithes), ndvi_filter(dates, modis_ndvi, sc_station_ndvi, fithes)
-
-
-def ndvi_for_year(mc_pack, sc_pack, year):
-    mc_date, mc_modis_ndvi, mc_station_ndvi = [], [], []
-    sc_date, sc_modis_ndvi, sc_station_ndvi = [], [], []
+    ax.legend()
+    plt.suptitle(f'{title}')
+    plt.xlabel('Date')
+    plt.ylabel('NDVI')
     
-    for i, date in enumerate(mc_pack[0]):
-        if date.year == year:
-           mc_date.append(date)
-           mc_modis_ndvi.append(mc_pack[1][i])
-           mc_station_ndvi.append(mc_pack[2][i])
+    pdf.savefig()
+    plt.close()
 
-    for i, date in enumerate(sc_pack[0]):
-        if date.year == year:
-           sc_date.append(date)
-           sc_modis_ndvi.append(sc_pack[1][i])
-           sc_station_ndvi.append(sc_pack[2][i])
 
-    return np.array([mc_date, mc_modis_ndvi, mc_station_ndvi]), np.array([sc_date, sc_modis_ndvi, sc_station_ndvi])
+def ndvi_filter(dates, satellite_ndvi, in_situ_ndvi):
+    filtered_ndvi, filtered_in_situ, filtered_dates, error = [], [], [], []
+
+    for i, m_ndvi in enumerate(satellite_ndvi):
+        error.append(np.fabs(m_ndvi - in_situ_ndvi[i]) / np.fabs(in_situ_ndvi[i]))
+
+    stddev = std.pstdev(error)
+
+    for i, value in enumerate(error):
+        if value < (2 * stddev):
+            filtered_dates.append(dates[i])
+            filtered_ndvi.append(satellite_ndvi[i])
+            filtered_in_situ.append(in_situ_ndvi[i])
+
+    return filtered_dates, filtered_ndvi, filtered_in_situ
 
 
 if __name__ == "__main__":
     pdf = PdfPages('Analyze.pdf')
+
+    with open('data.yaml', 'r') as inp:
+        data = yaml.load(inp, Loader=yaml.Loader)
+
+    ndvi, fitches, years = data[0], data[1], data[2]
+    water_vapor = {key: value[1] for key, value in fitches.items()}
+    solar_zen = {key: value[3] for key, value in fitches.items()}
+    angles = {key: np.fabs(value[0] - value[2]) for key, value in fitches.items()}
+
+    ndvi, angles, water_vapor, solar_zen = sorted(ndvi.items()), sorted(angles.items()), sorted(water_vapor.items()), sorted(solar_zen.items())
+    ndvi_keys, ndvi = zip(*ndvi)
+    angles_keys, angles = zip(*angles)
+    solar_zen_keys, solar_zen = zip(*solar_zen)
+    water_vapor_keys, water_vapor = zip(*water_vapor)
+
+    ndvi = np.array(ndvi)
     
-    try:
-        ndvi = {}
-        years = set()
-        
-        sl_connection = sl.connect("../ndvi_database.db", detect_types=sl.PARSE_DECLTYPES)
-        cursor = sl_connection.cursor()
-        cursor.execute("SELECT date, modis_ndvi_data, station_ndvi_data, modis_azimut, station_wv, station_solar_az FROM ndvi")
+    data = {'date': ndvi_keys, 'modis_ndvi': ndvi[:, 0], 'mc_station_ndvi': ndvi[:, 1], 'sc_station_ndvi': ndvi[:, 2], 'l8_station_ndvi': ndvi[:, 3], 
+            'l9_station_ndvi': ndvi[:, 4], 'kv_station_ndvi': ndvi[:, 5], 'angle': angles, 'water_vapor': water_vapor, 'solar_zen': solar_zen}
 
-        while True:
-            row = cursor.fetchone()
-            if row:
-                ndvi[row[0]] = np.insert(np.frombuffer(row[2]), 0, std.fmean(np.frombuffer(row[1])))
-                ndvi[row[0]] = np.insert(ndvi[row[0]], 5,  np.array([row[3], row[4], row[5]]))
-                years.add(date.fromisoformat(row[0]).year)
-            else:
-                break
+    df = pd.DataFrame(data)
+    df['date'] = pd.to_datetime(df['date'])
 
-        years = sorted(years)
-        water_vapor, angles = {}, {}
-        mc_filtered, sc_filtered = filtered_dict(ndvi)
-        
-        for i in range(mc_filtered[1].shape[0]):
-            if mc_filtered[3][i][1] != 9999.0:
-                water_vapor[np.fabs(mc_filtered[1][i] - mc_filtered[2][i]) / mc_filtered[2][i]] = mc_filtered[3][i][1]
-            
-            if mc_filtered[3][i][0] != None:
-                if mc_filtered[3][i][2] < 0: mc_filtered[3][i][2] += 360
-                angles[np.fabs(mc_filtered[1][i] - mc_filtered[2][i]) / mc_filtered[2][i]] = np.fabs(mc_filtered[3][i][0] - mc_filtered[3][i][2])
+    data_plot = [df['mc_station_ndvi'].values, df['sc_station_ndvi'].values, df['l8_station_ndvi'].values, df['l9_station_ndvi'].values, df['kv_station_ndvi'].values]
+    lables_plot = ['Station NDVI in MODIS channels', 'Station NDVI in standard channels', 'Station NDVI in Landsat 8 channels', 'Station NDVI in Landsat 9 channels', 'Station NDVI in Kanopus channels']
+    add_ndvi_plot(df['date'].values, data_plot, pdf, 'NDVI 2015-2021', lables_plot)
 
-        #add_ndvi_plot(mc_filtered[0], mc_filtered[1], mc_filtered[2], pdf, 'NDVI 2015-2021 in MODIS channels', 'MODIS')
-        #add_ndvi_plot(sc_filtered[0], sc_filtered[1], sc_filtered[2], pdf, 'NDVI 2015-2021 in standart channels', 'standard')
-        
-        #add_regression_plot(mc_filtered[1], mc_filtered[2], pdf, 'Linear regression 2015-2021 in MODIS channels')
-        #add_regression_plot(sc_filtered[1], sc_filtered[2], pdf, 'Linear regression 2015-2021 in standart channels')
+    for i in sorted(years):
+        year_df = df.query(f'date.dt.year=={i}')
 
-        water_vapor = sorted(water_vapor.items(), key=lambda x: x[0])
-        water_vapor_key, water_vapor_val = zip(*water_vapor)
+        data_plot = [year_df['mc_station_ndvi'].values, year_df['sc_station_ndvi'].values, year_df['l8_station_ndvi'].values, year_df['l9_station_ndvi'].values, year_df['kv_station_ndvi'].values]
+        add_ndvi_plot(year_df['date'].values, data_plot, pdf, f'NDVI {i}', lables_plot)
+    
+    filtered_dates, modis_ndvi, station_ndvi = ndvi_filter(df['date'].values, df['modis_ndvi'].values, df['mc_station_ndvi'].values)
+    add_ndvi_plot(filtered_dates, [modis_ndvi, station_ndvi], pdf, 'NDVI 2015-2021 in MODIS channels', ['MODIS NDVI', 'Station NDVI in MODIS channels'])
+    add_regression_plot(np.array(modis_ndvi), np.array(station_ndvi), pdf, 'Linear regression 2015-2021 in MODIS channels')
 
-        angles = sorted(angles.items(), key=lambda x: x[0])
-        angles_key, angles_val = zip(*angles)
-        
-        add_fitch_plot(water_vapor_key, water_vapor_val, angles_key, angles_val, pdf, 'Error from WV and angles')
+    for i in sorted(years):
+        year_df = df.query(f'date.dt.year=={i}')
 
-        #for year in years:
-            #mc_year, sc_year = ndvi_for_year(mc_filtered, sc_filtered, year)
+        filtered_dates, modis_ndvi, station_ndvi = ndvi_filter(year_df['date'].values, year_df['modis_ndvi'].values, year_df['mc_station_ndvi'].values)
+        add_ndvi_plot(filtered_dates, [modis_ndvi, station_ndvi], pdf, f'NDVI {i} in MODIS channels', ['MODIS NDVI', 'Station NDVI in MODIS channels'])
+        add_regression_plot(np.array(modis_ndvi), np.array(station_ndvi), pdf, f'Linear regression {i} in MODIS channels')
 
-            #add_ndvi_plot(mc_year[0], mc_year[1], mc_year[2], pdf, f'NDVI {year} in MODIS channels', 'MODIS')
-            #add_ndvi_plot(sc_year[0], sc_year[1], sc_year[2], pdf, f'NDVI {year} in standart channels', 'standard')
-            
-            #add_regression_plot(mc_year[1], mc_year[2], pdf, f'Linear regression {year} in MODIS channels')
-            #add_regression_plot(sc_year[1], sc_year[2], pdf, f'Linear regression {year} in standart channels')
+    filtered_dates, modis_ndvi, station_ndvi = ndvi_filter(df['date'].values, df['modis_ndvi'].values, df['sc_station_ndvi'].values)
+    add_ndvi_plot(filtered_dates, [modis_ndvi, station_ndvi], pdf, 'NDVI 2015-2021 in standart channels', ['MODIS NDVI', 'Station NDVI in standard channels'])
+    add_regression_plot(np.array(modis_ndvi), np.array(station_ndvi), pdf, 'Linear regression 2015-2021 in standart channels')
 
-    except sl.Error as error:
-        print("Error", error)
-    finally:
-        if (sl_connection):
-            sl_connection.close()
-        
+    for i in sorted(years):
+        year_df = df.query(f'date.dt.year=={i}')
+
+        filtered_dates, modis_ndvi, station_ndvi = ndvi_filter(year_df['date'].values, year_df['modis_ndvi'].values, year_df['sc_station_ndvi'].values)
+        add_ndvi_plot(filtered_dates, [modis_ndvi, station_ndvi], pdf, f'NDVI {i} in standart channels', ['MODIS NDVI', 'Station NDVI in standard channels'])
+        add_regression_plot(np.array(modis_ndvi), np.array(station_ndvi), pdf, f'Linear regression {i} in standart channels')
+
+    df = df.query('water_vapor<9999')
+    
+    error = np.fabs(df['modis_ndvi'].values - df['mc_station_ndvi'].values) / np.fabs(df['mc_station_ndvi'].values)
+    water_vapor = df['water_vapor'].values
+    solar_zen = df['solar_zen'].values
+    angle = df['angle'].values
+
+    add_scatter_plot(error, water_vapor, pdf, 'Water vapor dependence of the NDVI', ['Error', 'Water vapor'])
+    add_scatter_plot(error, angle, pdf, 'Angle difference dependence of the NDVI', ['Error', 'Angle difference'])
+    add_scatter_plot(error, solar_zen, pdf, 'Solar zenith dependence of the NDVI', ['Error', 'Solar zenith'])
+
     pdf.close()
